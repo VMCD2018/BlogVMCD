@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/css/materialize.min.css">
+	<style type="text/css">
+		$body-bg :  #eee;
+		$canvas-bg: #fff;
+
+		body{
+		  background-color: $body-bg;
+		}
+
+		canvas {
+		  display: block;
+		  margin: 2em auto;
+		  /*margin: calc(50vh - 150px) auto 0;*/
+		  background: $canvas-bg;
+		  border-radius: 3px;
+		  box-shadow: 0px 0px 15px 3px #ccc;
+		  cursor:pointer;
+		}		
+	</style>
+</head>
+<body>
+	<div class="row">
+		<div class="col l12 m12 s12 center">
+			<canvas id="canvas">Su navegador no soporta canvas :( </canvas>
+			<label id="valorX"></label>
+			<input type="button" name="limpiar" id="limpiar" value="Limpiar">
+			<label id="valorY"></label>
+		</div>
+	</div>
+	<script type="text/javascript" src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/js/materialize.min.js"></script>
+
+	<script type="text/javascript">
+		var canvas = document.getElementById("canvas");
+		var ctx = canvas.getContext("2d");
+		var cw = canvas.width = window.innerWidth*0.9,// 500,
+		  cx = cw / 2;
+		var ch = canvas.height = window.innerHeight*0.8,//500,
+		  cy = ch / 2;
+		var xIni=-1, yIni=-1;
+		var xFin=-1, yFin=-1;
+		var lineas;
+		var punto="";
+
+		var dibujar = false;
+		ctx.lineJoin = "round";
+
+		var btnLimpiar = document.getElementById("limpiar");
+		btnLimpiar.addEventListener("click", function(){
+			ctx.clearRect(0,0,cw,ch);
+		});
+
+		canvas.addEventListener('mousedown', function(evt) {
+			  dibujar = !dibujar;   //variable initialized on false
+			  pStart = windowToCanvasCoord(canvas, evt.clientX, evt.clientY);
+			  pEnd = pStart;
+			  console.log("Click in (" + pStart.x + "," + pStart.y + ")");
+  			//console.log("Click in (" + evt.clientX + "," + evt.clientY + ")");
+			// if(xIni===-1)
+			// {
+			// 	xIni=evt.clientX;
+			// 	yIni=evt.clientY;
+			// }
+			// else
+			// {
+			// 	xFin=evt.clientX;
+			// 	yFin=evt.clientY;
+			// }
+
+		 //  dibujar = true;
+		 //  //ctx.clearRect(0, 0, cw, ch);
+
+		}, false);
+
+		canvas.addEventListener('mouseup', function(evt) {
+			dibujar = false;
+			if(typeof lineas === 'undefined')
+			{
+				punto="p1";
+			    lineas={punto:[pStart.x,pStart.y,pEnd.x,pEnd.y,0, 128, 255, 1]};
+			}
+			else
+			{
+				var num=Number(punto.substr(1))+1;
+				punto = "p" + num;
+				lineas[punto]=[pStart.x,pStart.y,pEnd.x,pEnd.y,0, 128, 255, 1];
+			}
+		}, false);
+
+		canvas.addEventListener("mouseout", function(evt) {
+		  dibujar = false;
+		}, false);
+
+		canvas.addEventListener("mousemove", function(evt) {
+		if (dibujar)
+		  {
+		   ctx.beginPath();
+		    ctx.clearRect(0, 0, canvas.width, canvas.height);
+			for (i in lineas) {
+				ctx.moveTo(lineas[i][0],lineas[i][1]);
+				ctx.lineTo(lineas[i][2],lineas[i][3]);
+				ctx.stroke();
+				//drawLine(ctx,lineas[i][0],lineas[i][1],lineas[i][2],lineas[i][3],lineas[i][4],lineas[i][5],lineas[i][6],lineas[i][7]);
+			}		    
+		    //drawSomething(ctx, pStart, pEnd, color);
+		    /*if((pStart.x>pEnd.x)||(pStart.y>pEnd.y))
+		    {
+		    	var temp=pEnd;
+		    	pEnd=pStart;
+		    	pStart=temp;
+		    }*/
+
+			ctx.moveTo(pStart.x,pStart.y);
+			ctx.lineTo(pEnd.x,pEnd.y);
+			ctx.stroke();
+
+		    //drawLine(ctx, pStart.x, pStart.y, pEnd.x, pEnd.y, 0, 128, 255, 1);
+		    pEnd = windowToCanvasCoord(canvas, evt.clientX, evt.clientY);
+		    //draw coordinates position into canvas
+		    ctx.font = "10pt Arial";
+		    ctx.fillStyle = "rgba(50,50,50,1.0)";
+		    var pos = windowToCanvasCoord(canvas, evt.clientX, evt.clientY);
+		    var str = "Pos:(" + pos.x + "," + pos.y + ")\npStart:(" + + pStart.x + "," + pStart.y + ")\npEnd:(" + pEnd.x + "," + pEnd.y + ")";
+		    ctx.fillText(str, 10, 10);
+		  }
+		  /*if (dibujar) {
+		    var m = oMousePos(canvas, evt);
+		    ctx.lineTo(m.x, m.y);
+		    ctx.stroke();
+		  }*/
+		}, false);
+function setPixel(context, x,y, r, g, b, a)
+{
+    /// on main function:
+    /// var pixel = context.createImageData(1,1);
+    /// var colorPixel = pixel.data;
+    //colorPixel[0] = r;
+    //colorPixel[1] = g;
+    //colorPixel[2] = b;
+    //colorPixel[3] = a;
+    //context.putImageData(pixel, x, y);
+    context.fillStyle = "rgba("+r+","+g+","+b+","+a+")";
+    context.fillRect( x, y, 1, 1 );
+}
+function float2int (value)
+{
+    return value | 0;
+}
+function drawLine(context, x1, y1, x2, y2, r, g, b, a)
+{
+	ctx.moveTo(x1,y1);
+	ctx.lineTo(x2,y2);
+	ctx.stroke();
+
+
+	//if(x1>x2)
+    /*var dx = (x2 - x1);
+    var dy = (y2 - y1);
+    if(x1<=x2)
+    {
+    	if(dx!==0)
+    	{
+		    for (x = x1; x <= x2; x++)
+		    {
+		        y = y1 + dy * (x - x1) / dx;
+		        var intvalue = float2int(y);
+		        //document.getElementById("valorY").innerHTML="(" + x + "," + intvalue + ")";
+		        //ctx.fillText(intvalue, 10, 100);
+		        setPixel(context, x, intvalue, r, g, b, a);
+		    }
+		}
+		else
+		{
+		    for (x = 0; x <= dy; x++)
+		    {
+		        y = y1+x;//:y1 + dy * (x - x1) / dx);
+		        var intvalue = float2int(y);
+		        document.getElementById("valorY").innerHTML="(" + x + "," + intvalue + ")";
+		        //ctx.fillText(intvalue, 10, 100);
+		        setPixel(context, x1, intvalue, r, g, b, a);
+		    }
+		}
+	}
+	else
+	{
+		//alert("aqui");
+	    for (x = x1; x >= x2; x--)
+	    {
+	        y = ((dx===0)?y1+dy:y1 + dy * (x - x1) / dx);
+	        //y = y1 + dy * (x - x1) / dx;
+	        var intvalue = float2int(y);
+	        //document.getElementById("valorX").innerHTML="(" + x + "," + intvalue + ")";
+	        setPixel(context, x, intvalue, r, g, b, a);
+	    }
+
+	}*/
+}
+function windowToCanvasCoord(canvas, x, y)
+{
+  var bbox = canvas.getBoundingClientRect();
+  return { x: x - bbox.left * (canvas.width / bbox.width),
+           y: y - bbox.top * (canvas.height / bbox.height)
+  };
+}
+		function oMousePos(canvas, evt) {
+		  var ClientRect = canvas.getBoundingClientRect();
+		  return { //objeto
+		    x: Math.round(evt.clientX - ClientRect.left),
+		    y: Math.round(evt.clientY - ClientRect.top)
+		  }
+		}
+	</script>
+
+</body>
+</html>
